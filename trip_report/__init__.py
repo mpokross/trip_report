@@ -30,12 +30,13 @@ class StrEncoder(json.JSONEncoder):
 
 
 def run_report(
-    base_directory: Union[str, Path],
-    json_flag: bool = False,
-    debug: bool = False,
-    output_pth: Optional[Union[str, Path]] = None,
-    file_method: Literal['symlink', 'copy'] = 'copy',
-    json_file: str = 'data.json'
+        base_directory: Union[str, Path],
+        json_flag: bool = False,
+        debug: bool = False,
+        output_pth: Optional[Union[str, Path]] = None,
+        report_name: Optional[str] = None,
+        file_method: Literal['symlink', 'copy'] = 'copy',
+        json_file: str = 'data.json'
 ) -> None:
     """
     Generate a synchrotron trip report from either a directory or a JSON file.
@@ -45,6 +46,7 @@ def run_report(
         json_flag: If True, treat base_directory as a JSON file path
         debug: Enable debug logging if True
         output_pth: Custom output directory for the report
+        report_name: Name of report file
         file_method: Method for handling files in the report ('symlink' or 'copy')
         json_file: Name of the JSON file to be generated
 
@@ -72,11 +74,12 @@ def run_report(
         trip_name: str = result['trip_name']
 
         # Handle output dir creation
+        report_name: str = f'{trip_name}_Trip_Report' if report_name is None else report_name
         if output_pth is None:
-            output_pth = Path.cwd() / f'{trip_name}_Trip_Report'
+            output_pth = Path.cwd() / report_name
         else:
-            output_pth = Path(output_pth)
-        output_pth.mkdir(exist_ok=True)
+            output_pth = Path(output_pth) / report_name
+        output_pth.mkdir(parents=True, exist_ok=True)
 
         # Write json file
         _json: str = json.dumps(result, indent=4, sort_keys=True, cls=StrEncoder)
@@ -89,8 +92,8 @@ def run_report(
         report_name: str = f'{trip_name} Trip Report'
         generator = IMCAReportGenerator(result['trip_data'])
         generator.generate_reports(
-            output_dir=output_pth, 
-            file_method=file_method, 
+            output_dir=output_pth,
+            file_method=file_method,
             report_title=report_name
         )
 

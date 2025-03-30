@@ -52,7 +52,14 @@ def create_parser() -> argparse.ArgumentParser:
         '--output',
         type=str,
         default=None,
-        help='Specify custom output directory for the report'
+        help='Specify output directory for the report, use --report_name to set the report name'
+    )
+
+    parser.add_argument(
+        '--report-name',
+        type=str,
+        default=None,
+        help='Specify report name'
     )
     
     parser.add_argument(
@@ -86,7 +93,8 @@ def main(argv: Optional[List[str]] = None) -> int:
             base_directory=args.base_directory, 
             json_flag=args.json_flag, 
             debug=args.debug, 
-            output_pth=args.output, 
+            output_pth=args.output,
+            report_name=args.report_name,
             file_method=args.file_method
         )
         return 0

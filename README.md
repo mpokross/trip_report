@@ -39,7 +39,7 @@ A robust Python application for generating comprehensive HTML reports from synch
 python -m trip_report /path/to/synchrotron/data
 
 # Advanced options
-python -m trip_report /path/to/synchrotron/data --debug --output ./reports
+python -m trip_report /path/to/synchrotron/data --debug --output ./reports --report-name my_trip
 ```
 
 ### Command Line Options
@@ -47,6 +47,7 @@ python -m trip_report /path/to/synchrotron/data --debug --output ./reports
 - `--json`: Switch input to JSON file
 - `--debug`: Enable detailed debug logging
 - `--output`: Specify custom output directory
+- `--report-name`: Specify a custom report name
 - `--file-method`: Choose file handling method (copy or symlink)
 
 ## Report Structure
