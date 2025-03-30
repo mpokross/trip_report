@@ -1,0 +1,13 @@
+#!/bin/bash
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+export PYTHONPATH="$SCRIPT_DIR/.."
+
+# Find micromamba in PATH if possible
+MICROMAMBA_CMD=$(command -v micromamba)
+
+if [ ! -x "$MICROMAMBA_CMD" ]; then
+    echo "Error: micromamba not found" >&2
+    exit 1
+fi
+
+"$MICROMAMBA_CMD" run -n p310 python -m trip_report "$@"
