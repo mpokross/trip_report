@@ -70,6 +70,23 @@ class XmlParsingError(SynchrotronDataProcessingError):
 class SynchrotronDataCollector:
     """
     A class to collect and process synchrotron data from a given directory structure.
+
+    Expected directory structure:
+    base_path/
+    ├── site1/
+    │   ├── puck1/
+    │   │   ├── position1/
+    │   │   │   ├── collection1/
+    │   │   │   │   ├── camera/
+    │   │   │   │   ├── images/
+    │   │   │   │   └── processing/
+    │   │   │   └── collection2/
+    │   │   └── position2/
+    │   └── puck2/
+    └── site2/
+
+    Each directory type (camera, images, processing, etc.) is processed
+    differently to extract relevant information.
     """
 
     def __init__(self, base_path: Union[str, Path], logger: Optional[logging.Logger] = None):
@@ -421,6 +438,69 @@ class SynchrotronDataCollector:
             if dataset:
                 self.trip_data[key].append(dataset)
 
+    def _process_puck(self, puck_path: Path, stats: ProcessingStats) -> None:
+
+        """
+        Process a puck directory containing position directories.
+
+        Args:
+            puck_path: Path to the puck directory
+            stats: Processing statistics to update
+
+        Raises:
+            Exception: If processing of the puck fails
+        """
+        if not puck_path.is_dir():
+            self.logger.warning(f"Skipping {puck_path}, not a directory")
+            return
+
+        self.logger.info(f"Processing puck: {puck_path.name}")
+
+        # Extract any tar files if present
+        for tar_file in puck_path.glob("*.tar*"):
+            self.extract_tar(tar_file)
+
+        # Process each position in the puck
+        position_count = 0
+        for pos_path in puck_path.iterdir():
+            if not pos_path.is_dir():
+                continue
+
+            position_count += 1
+            try:
+                self._process_position(pos_path, stats)
+            except Exception as e:
+                self.logger.error(f"Error processing position {pos_path.name}: {e}")
+                stats.errors.append({
+                    'path': str(pos_path),
+                    'error': str(e)
+                })
+
+        if position_count == 0:
+            self.logger.warning(f"No position directories found in puck: {puck_path.name}")
+
+    def _process_site(self, site_path: Path, stats: ProcessingStats) -> None:
+        """Process a site directory containing pucks."""
+        if site_path.is_file():
+            self.logger.info(f"Skipping {site_path}, not a directory")
+            return
+
+        for puck_path in site_path.iterdir():
+            if not puck_path.is_dir():
+                continue
+
+            stats.total_pucks += 1
+            try:
+                self._process_puck(puck_path, stats)
+                stats.processed_pucks += 1
+            except Exception as pos_err:
+                stats.skipped_pucks += 1
+                stats.errors.append({
+                    'path': str(puck_path),
+                    'error': str(pos_err)
+                })
+                self.logger.error(f"Error processing puck path {puck_path}: {pos_err}")
+
     def collect_data(self) -> Dict:
         """
         Collect synchrotron data from directory structure with enhanced error handling.
@@ -443,26 +523,11 @@ class SynchrotronDataCollector:
         stats = ProcessingStats()
 
         try:
-            for puck_path in self.base_path.iterdir():
-                # Skip non-directory entries
-                if not puck_path.is_dir():
-                    continue
+            for site_path in self.base_path.iterdir():
 
-                stats.total_pucks += 1
+                self._process_site(site_path, stats)
 
-                try:
-                    for pos_path in puck_path.iterdir():
-                        self._process_position(pos_path, stats)
 
-                    stats.processed_pucks += 1
-
-                except Exception as pos_err:
-                    stats.skipped_pucks += 1
-                    stats.errors.append({
-                        'path': str(puck_path),
-                        'error': str(pos_err)
-                    })
-                    self.logger.error(f"Error processing puck path {puck_path}: {pos_err}")
 
             # Log processing summary
             self.logger.info(f"Data collection summary: {stats}")
