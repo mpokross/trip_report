@@ -69,6 +69,20 @@ def create_parser() -> argparse.ArgumentParser:
         default='copy',
         help='Method to use for file operations: copy or symlink files'
     )
+
+    parser.add_argument(
+        '--no-site',
+        action='store_true',
+        default=False,
+        help='Trip directory has no site directory'
+    )
+
+    parser.add_argument(
+        '--csv',
+        type=str,
+        default=None,
+        help= 'Specify IMCA trip CSV'
+    )
     
     return parser
 
@@ -95,7 +109,9 @@ def main(argv: Optional[List[str]] = None) -> int:
             debug=args.debug, 
             output_pth=args.output,
             report_name=args.report_name,
-            file_method=args.file_method
+            file_method=args.file_method,
+            no_site=args.no_site,
+            csv=args.csv
         )
         return 0
     except Exception as e:

@@ -6,6 +6,18 @@
     <meta name="description" content="{{ report_title }} - Crystallography Data Summary">
     <title>{{ report_title }}</title>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Set max height for tooltip text based on content length
+            const tooltips = document.querySelectorAll('.tooltip-text');
+            tooltips.forEach(tooltip => {
+                if (tooltip.textContent.length > 300) {
+                    tooltip.style.maxHeight = '200px';
+                    tooltip.style.overflow = 'auto';
+                }
+            });
+        });
+    </script>
 </head>
 <style>
     /* Base styles */
@@ -55,7 +67,7 @@
     }
 
     .container {
-        max-width: 1400px;
+        max-width: 95%;
         margin: 0 auto;
         padding: var(--spacing-md);
     }
@@ -115,7 +127,7 @@
     .data-table th,
     .data-table td {
         padding: var(--spacing-md);
-        text-align: left;
+        text-align: center;
         border-bottom: 1px solid var(--border-color);
     }
 
@@ -132,12 +144,10 @@
         background-color: var(--hover-color);
     }
 
-    .alternate-row {
-        background-color: var(--alternate-row);
-    }
-
     /* Cell styling */
     .puck-key-cell {
+        width: 150px;
+        max-width: 200px;
         font-weight: 500;
         background-color: #f8fafc;
     }
@@ -155,6 +165,49 @@
 
     .action-cell {
         text-align: center;
+    }
+
+    /* Truncated text and tooltip styles */
+    .truncate {
+        max-width: 200px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        position: relative;
+        cursor: help;
+    }
+
+    .tooltip {
+        position: relative;
+        display: inline-block;
+    }
+
+    .tooltip .tooltip-text {
+        visibility: hidden;
+        background-color: #333;
+        color: #fff;
+        text-align: left;
+        border-radius: var(--border-radius-md);
+        padding: var(--spacing-sm) var(--spacing-md);
+        position: absolute;
+        z-index: 100;
+        bottom: 125%;
+        left: 50%;
+        transform: translateX(-50%);
+        min-width: 250px;
+        max-width: 350px;
+        box-shadow: var(--shadow-lg);
+        opacity: 0;
+        transition: opacity 0.3s;
+        white-space: normal;
+        font-size: 0.9rem;
+        line-height: 1.5;
+        pointer-events: none;
+    }
+
+    .tooltip:hover .tooltip-text {
+        visibility: visible;
+        opacity: 1;
     }
 
     /* Button styles */
@@ -181,6 +234,15 @@
         border-top: 1px solid var(--border-color);
         color: var(--text-light);
         font-size: 0.9rem;
+    }
+
+    /* Table footnotes */
+    .table-note {
+        font-size: 0.85rem;
+        color: var(--text-light);
+        margin-top: var(--spacing-md);
+        padding-left: var(--spacing-sm);
+        font-style: italic;
     }
 
     /* Accessibility */
@@ -268,10 +330,14 @@
                         <thead>
                         <tr>
                             <th scope="col">Puck Key</th>
+                            {% if csv_loaded %}
+                                <th scope="col">Project</th>
+                                <th scope="col">Comments</th>
+                            {% endif %}
                             <th scope="col">Collection</th>
-                            <th scope="col">Resolution High</th>
-                            <th scope="col">Resolution Low</th>
-                            <th scope="col">CC Half</th>
+                            <th scope="col">Resolution*</th>
+                            <th scope="col">CC Half*</th>
+                            <th scope="col">Mean I Over SigI*</th>
                             <th scope="col">Space Group</th>
                             <th scope="col">Refined Cell</th>
                             <th scope="col">Screened</th>
@@ -281,73 +347,102 @@
                         <tbody>
                         {% set puck_keys = imca_data.keys()|list %}
                         {% for puck_key, puck_entries in imca_data.items() %}
-                        {% for entry in puck_entries %}
-                        <tr class="{{ 'alternate-row' if loop.index % 2 == 0 else '' }}">
-                            {% if loop.first %}
-                            <td data-label="Puck Key" rowspan="{{ puck_entries|length }}" class="puck-key-cell">{{
-                                puck_key }}
-                            </td>
-                            {% endif %}
-                            <td data-label="Collection">{{ entry.collection }}</td>
+                            {% for entry in puck_entries %}
+                                <tr class="{{ 'alternate-row' if loop.index % 2 == 0 else '' }}">
+                                    {% if loop.first %}
+                                        <td data-label="Puck Key" rowspan="{{ puck_entries|length }}"
+                                            class="puck-key-cell">{{ puck_key }}
+                                        </td>
+                                    {% endif %}
 
-                            {# Resolution High #}
-                            <td data-label="Resolution High" class="numeric-cell">
-                                {% if entry.get('processing', {}).get('autoproc_xml', {}).get('scale_data', {}) %}
-                                {{ entry.processing.autoproc_xml.scale_data.get('Resolution Limit High', '') }}
-                                {% endif %}
-                            </td>
+                                    {# CSV Loaded #}
+                                    {% if csv_loaded %}
+                                        <td data-label="Project">{{ entry.Project }}</td>
+                                        <td data-label="Comments">
+                                            {% if entry.Staff_Comments %}
+                                                <div class="tooltip">
+                                                    <div class="truncate">{{ entry.Staff_Comments|truncate(50, true, '...') }}</div>
+                                                    <span class="tooltip-text">{{ entry.Staff_Comments }}</span>
+                                                </div>
+                                            {% endif %}
+                                        </td>
+                                    {% endif %}
 
-                            {# Resolution Low #}
-                            <td data-label="Resolution Low" class="numeric-cell">
-                                {% if entry.get('processing', {}).get('autoproc_xml', {}).get('scale_data', {}) %}
-                                {{ entry.processing.autoproc_xml.scale_data.get('Resolution Limit Low', '') }}
-                                {% endif %}
-                            </td>
+                                    {# Collection #}
+                                    <td data-label="Collection">{{ entry.collection }}</td>
 
-                            {# CC Half #}
-                            <td data-label="CC Half" class="numeric-cell">
-                                {% if entry.get('processing', {}).get('autoproc_xml', {}).get('scale_data', {}) %}
-                                {{ entry.processing.autoproc_xml.scale_data.get('CC Half', '') }}
-                                {% endif %}
-                            </td>
+                                    {# Resolution #}
+                                    <td data-label="Resolution" class="numeric-cell">
+                                        {% set scale_data = entry.get('processing', {}).get('autoproc_xml', {}).get('scale_data', {}) %}
+                                        {% if scale_data %}
+                                            {{ scale_data.get('overall', {}).get('Resolution Limit High', '') }}
+                                            <br>
+                                            {{ scale_data.get('overall', {}).get('Resolution Limit Low', '') }}
+                                        {% endif %}
+                                    </td>
 
-                            {# Space Group #}
-                            <td data-label="Space Group">
-                                {% if entry.get('processing', {}).get('autoproc_xml', {}) %}
-                                {{ entry.processing.autoproc_xml.get('spaceGroup', '') }}
-                                {% endif %}
-                            </td>
+                                    {# CC Half #}
+                                    <td data-label="CC Half" class="numeric-cell">
+                                        {% set scale_data = entry.get('processing', {}).get('autoproc_xml', {}).get('scale_data', {}) %}
+                                        {% if scale_data %}
+                                            {{ scale_data.get('outerShell', {}).get('CC Half', '') }}
+                                            <br>
+                                            {{ scale_data.get('innerShell', {}).get('CC Half', '') }}
+                                        {% endif %}
+                                    </td>
 
-                            {# Refined Cell #}
-                            <td data-label="Refined Cell" class="cell-data">
-                                {% if entry.get('processing', {}).get('autoproc_xml', {}).get('cell_data', {}) %}
-                                {{ entry.processing.autoproc_xml.cell_data.get('A', '') }},
-                                {{ entry.processing.autoproc_xml.cell_data.get('B', '') }},
-                                {{ entry.processing.autoproc_xml.cell_data.get('C', '') }},
-                                {{ entry.processing.autoproc_xml.cell_data.get('ALPHA', '') }},
-                                {{ entry.processing.autoproc_xml.cell_data.get('BETA', '') }},
-                                {{ entry.processing.autoproc_xml.cell_data.get('GAMMA', '') }}
-                                {% endif %}
-                            </td>
+                                    {# Mean I Over SigI #}
+                                    <td data-label="Mean I Over SigI" class="numeric-cell">
+                                        {% set scale_data = entry.get('processing', {}).get('autoproc_xml', {}).get('scale_data', {}) %}
+                                        {% if scale_data %}
+                                            {{ scale_data.get('outerShell', {}).get('Mean I Over SigI', '') }}
+                                            <br>
+                                            {{ scale_data.get('innerShell', {}).get('Mean I Over SigI', '') }}
+                                        {% endif %}
+                                    </td>
 
-                            {# Screened #}
-                            <td data-label="Screened">
-                                {% if entry.get('screen') %}
-                                {{ "YES" }}
-                                {% endif %}
-                            </td>
+                                    {# Space Group #}
+                                    <td data-label="Space Group">
+                                        {% set autoproc = entry.get('processing', {}).get('autoproc_xml', {}) %}
+                                        {% if autoproc %}
+                                            {{ autoproc.get('spaceGroup', '') }}
+                                        {% endif %}
+                                    </td>
 
-                            {# Details Link #}
-                            <td data-label="Details" class="action-cell">
-                                <a href="{{ puck_key }}_{{ entry.collection }}_details.html" class="details-button">
-                                    View Details
-                                </a>
-                            </td>
-                        </tr>
-                        {% endfor %}
+                                    {# Refined Cell #}
+                                    <td data-label="Refined Cell" class="cell-data">
+                                        {% set cell_data = entry.get('processing', {}).get('autoproc_xml', {}).get('cell_data', {}) %}
+                                        {% if cell_data %}
+                                            {{ cell_data.get('A', '') }},
+                                            {{ cell_data.get('B', '') }},
+                                            {{ cell_data.get('C', '') }},
+                                            {{ cell_data.get('ALPHA', '') }},
+                                            {{ cell_data.get('BETA', '') }},
+                                            {{ cell_data.get('GAMMA', '') }}
+                                        {% endif %}
+                                    </td>
+
+                                    {# Screened #}
+                                    <td data-label="Screened">
+                                        {% if entry.get('screen') %}
+                                            {{ "YES" }}
+                                        {% endif %}
+                                    </td>
+
+
+                                    {# Details Link #}
+                                    <td data-label="Details" class="action-cell">
+                                        <a href="{{ puck_key }}_{{ entry.collection }}_details.html"
+                                           class="details-button">
+                                            View Details
+                                        </a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
                         {% endfor %}
                         </tbody>
                     </table>
+                    <div class="table-note">*InnerShell/OuterShell values are shown for applicable metrics</div>
                 </div>
             </div>
         </section>
@@ -355,7 +450,7 @@
 
     <footer class="footer">
         <div class="footer-content">
-            <p>&copy; {{ now().strftime("%Y") }} Matt Rules!</p>
+            <p>&copy; {{ now().strftime("%Y") }} {{ report_title }}</p>
         </div>
     </footer>
 </div>

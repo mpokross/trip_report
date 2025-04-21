@@ -342,6 +342,53 @@
             padding: var(--spacing-md);
         }
     }
+    
+    /* Tab styles */
+    .tabs-navigation {
+        display: flex;
+        border-bottom: 2px solid var(--border-color);
+        margin-bottom: var(--spacing-md);
+        overflow-x: auto;
+        overflow-y: hidden;
+        scrollbar-width: thin;
+    }
+    
+    .tab-button {
+        padding: var(--spacing-sm) var(--spacing-md); 
+        background: none;
+        border: none;
+        border-bottom: 2px solid transparent;
+        margin-bottom: -2px;
+        cursor: pointer;
+        font-weight: 500;
+        font-size: large;
+        color: var(--text-light);
+        transition: all 0.2s ease;
+        white-space: nowrap;
+    }
+    
+    .tab-button:hover {
+        color: var(--primary-color);
+    }
+    
+    .tab-button.active {
+        color: var(--primary-color);
+        border-bottom-color: var(--primary-color);
+    }
+    
+    .tab-pane {
+        display: none;
+    }
+    
+    .tab-pane.active {
+        display: block;
+        animation: fadeIn 0.3s ease;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
 </style>
 
 <body>
@@ -361,10 +408,10 @@
             </div>
             <div class="card-body">
                 {% if summary %}
-                <div class="detail-item">
-                    <span class="detail-label">Summary:</span>
-                    <a href="{{ summary }}" class="detail-link">View Summary HTML</a>
-                </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Summary:</span>
+                        <a href="{{ summary }}" class="detail-link">View Summary HTML</a>
+                    </div>
                 {% endif %}
 
                 <div class="detail-item">
@@ -376,55 +423,55 @@
 
         <!-- Camera Section -->
         {% if camera_files %}
-        <section class="card camera-section">
-            <div class="card-header">
-                <h2 class="card-title">Crystal Centering</h2>
-            </div>
-            <div class="card-body">
-                <div class="camera-controls">
-                    <label for="camera-dropdown" class="control-label">Select Camera Image:</label>
-                    <select id="camera-dropdown" class="form-control" aria-label="Select camera image">
-                        {% for file in camera_files %}
-                        <option value="{{ file }}">{{ file.split('/')[-1] }}</option>
-                        {% endfor %}
-                    </select>
+            <section class="card camera-section">
+                <div class="card-header">
+                    <h2 class="card-title">Crystal Centering</h2>
                 </div>
-                <div class="camera-display">
-                    <img src="{{ camera_files[0] }}" alt="Camera Image" class="camera-image" id="camera-image">
+                <div class="card-body">
+                    <div class="camera-controls">
+                        <label for="camera-dropdown" class="control-label">Select Camera Image:</label>
+                        <select id="camera-dropdown" class="form-control" aria-label="Select camera image">
+                            {% for file in camera_files %}
+                                <option value="{{ file }}">{{ file.split('/')[-1] }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="camera-display">
+                        <img src="{{ camera_files[0] }}" alt="Camera Image" class="camera-image" id="camera-image">
+                    </div>
                 </div>
-            </div>
-        </section>
+            </section>
         {% endif %}
 
         <!-- Diff Center Section -->
         {% if diff_center %}
-        <section class="card diff-center-section">
-            <div class="card-header">
-                <h2 class="card-title">Diff Center Details</h2>
-            </div>
-            <div class="card-body">
-                <div class="detail-item">
-                    <span class="detail-label">Diff Center Path:</span>
-                    <span class="detail-value path-value">{{ diff_center.get('diff_center_path', 'N/A') }}</span>
+            <section class="card diff-center-section">
+                <div class="card-header">
+                    <h2 class="card-title">Diff Center Details</h2>
                 </div>
+                <div class="card-body">
+                    <div class="detail-item">
+                        <span class="detail-label">Diff Center Path:</span>
+                        <span class="detail-value path-value">{{ diff_center.get('diff_center_path', 'N/A') }}</span>
+                    </div>
 
-                {% if diff_center.get('imcadr-ZX-result_local') %}
-                <div class="iframe-container">
-                    <h3 class="iframe-title">IMCADR ZX Result</h3>
-                    <iframe class="iframe-result" src="{{ diff_center['imcadr-ZX-result_local'] }}"
-                            title="IMCADR ZX Result" loading="lazy"></iframe>
-                </div>
-                {% endif %}
+                    {% if diff_center.get('imcadr-ZX-result_local') %}
+                        <div class="iframe-container">
+                            <h3 class="iframe-title">IMCADR ZX Result</h3>
+                            <iframe class="iframe-result" src="{{ diff_center['imcadr-ZX-result_local'] }}"
+                                    title="IMCADR ZX Result" loading="lazy"></iframe>
+                        </div>
+                    {% endif %}
 
-                {% if diff_center.get('imcadr-ZY-result_local') %}
-                <div class="iframe-container">
-                    <h3 class="iframe-title">IMCADR ZY Result</h3>
-                    <iframe class="iframe-result" src="{{ diff_center['imcadr-ZY-result_local'] }}"
-                            title="IMCADR ZY Result" loading="lazy"></iframe>
+                    {% if diff_center.get('imcadr-ZY-result_local') %}
+                        <div class="iframe-container">
+                            <h3 class="iframe-title">IMCADR ZY Result</h3>
+                            <iframe class="iframe-result" src="{{ diff_center['imcadr-ZY-result_local'] }}"
+                                    title="IMCADR ZY Result" loading="lazy"></iframe>
+                        </div>
+                    {% endif %}
                 </div>
-                {% endif %}
-            </div>
-        </section>
+            </section>
         {% endif %}
 
         <!-- Processing Information Section -->
@@ -447,18 +494,18 @@
                     </div>
 
                     {% if processing and processing.get('cell_data') %}
-                    <div class="detail-grid">
-                        {% for key, value in processing.get('cell_data', {}).items() %}
-                        <div class="detail-item">
-                            <span class="detail-label">{{ key }}:</span>
-                            <span class="detail-value">{{ value }}</span>
+                        <div class="detail-grid">
+                            {% for key, value in processing.get('cell_data', {}).items() %}
+                                <div class="detail-item">
+                                    <span class="detail-label">{{ key }}:</span>
+                                    <span class="detail-value">{{ value }}</span>
+                                </div>
+                            {% endfor %}
                         </div>
-                        {% endfor %}
-                    </div>
                     {% else %}
-                    <div class="detail-item empty-state">
-                        <span>No Cell Data Available</span>
-                    </div>
+                        <div class="detail-item empty-state">
+                            <span>No Cell Data Available</span>
+                        </div>
                     {% endif %}
                 </div>
 
@@ -466,18 +513,35 @@
                 <div class="subsection">
                     <h3 class="subsection-title">Scaling Statistics</h3>
                     {% if processing and processing.get('scale_data') %}
-                    <div class="detail-grid">
-                        {% for key, value in processing.get('scale_data', {}).items() %}
-                        <div class="detail-item">
-                            <span class="detail-label">{{ key }}:</span>
-                            <span class="detail-value">{{ value }}</span>
+                        <!-- Tab navigation -->
+                        <div class="tabs-navigation">
+                            {% for tab_name in processing.get('scale_data', {}).keys() %}
+                                <button class="tab-button {% if loop.first %}active{% endif %}"
+                                        data-tab="scale-tab-{{ loop.index }}">
+                                    {{ tab_name|capitalize }}
+                                </button>
+                            {% endfor %}
                         </div>
-                        {% endfor %}
-                    </div>
+                        
+                        <!-- Tab content -->
+                        <div class="tabs-content">
+                            {% for tab_name, stats in processing.get('scale_data', {}).items() %}
+                                <div id="scale-tab-{{ loop.index }}" class="tab-pane {% if loop.first %}active{% endif %}">
+                                    <div class="detail-grid">
+                                        {% for key, value in stats.items() %}
+                                            <div class="detail-item">
+                                                <span class="detail-label">{{ key }}:</span>
+                                                <span class="detail-value">{{ value }}</span>
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
                     {% else %}
-                    <div class="detail-item empty-state">
-                        <span>No Scaling Data Available</span>
-                    </div>
+                        <div class="detail-item empty-state">
+                            <span>No Scaling Data Available</span>
+                        </div>
                     {% endif %}
                 </div>
             </div>
@@ -485,40 +549,40 @@
 
         <!-- Screen Images Section -->
         {% if screen %}
-        <section class="card images-section">
-            <div class="card-header">
-                <h2 class="card-title">Screen Image Details</h2>
-            </div>
-            <div class="card-body">
-                <div class="detail-item">
-                    <span class="detail-label">Screen Images Path:</span>
-                    <span class="detail-value path-value">{{ screen.get('images_path', 'N/A') }}</span>
+            <section class="card images-section">
+                <div class="card-header">
+                    <h2 class="card-title">Screen Image Details</h2>
                 </div>
-                <div class="detail-item">
-                    <span class="detail-label">Number of Images:</span>
-                    <span class="detail-value">{{ screen.get('num_images', 'N/A') }}</span>
+                <div class="card-body">
+                    <div class="detail-item">
+                        <span class="detail-label">Screen Images Path:</span>
+                        <span class="detail-value path-value">{{ screen.get('images_path', 'N/A') }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Number of Images:</span>
+                        <span class="detail-value">{{ screen.get('num_images', 'N/A') }}</span>
+                    </div>
                 </div>
-            </div>
-        </section>
+            </section>
         {% endif %}
 
         <!-- Images Section -->
         {% if images %}
-        <section class="card images-section">
-            <div class="card-header">
-                <h2 class="card-title">Image Details</h2>
-            </div>
-            <div class="card-body">
-                <div class="detail-item">
-                    <span class="detail-label">Images Path:</span>
-                    <span class="detail-value path-value">{{ images.get('images_path', 'N/A') }}</span>
+            <section class="card images-section">
+                <div class="card-header">
+                    <h2 class="card-title">Image Details</h2>
                 </div>
-                <div class="detail-item">
-                    <span class="detail-label">Number of Images:</span>
-                    <span class="detail-value">{{ images.get('num_images', 'N/A') }}</span>
+                <div class="card-body">
+                    <div class="detail-item">
+                        <span class="detail-label">Images Path:</span>
+                        <span class="detail-value path-value">{{ images.get('images_path', 'N/A') }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Number of Images:</span>
+                        <span class="detail-value">{{ images.get('num_images', 'N/A') }}</span>
+                    </div>
                 </div>
-            </div>
-        </section>
+            </section>
         {% endif %}
     </main>
 
@@ -558,6 +622,35 @@
                 }, 1000);
             });
         }
+        
+        // Tab functionality
+        const tabButtons = document.querySelectorAll('.tab-button');
+        
+        tabButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                // Get the parent tabs-navigation element
+                const tabsNav = this.closest('.tabs-navigation');
+                // Get the associated tabs-content element
+                const tabsContent = tabsNav.nextElementSibling;
+                
+                // Remove active class from all buttons in this tab group
+                tabsNav.querySelectorAll('.tab-button').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                
+                // Remove active class from all panes in this tab group
+                tabsContent.querySelectorAll('.tab-pane').forEach(pane => {
+                    pane.classList.remove('active');
+                });
+                
+                // Add active class to current button
+                this.classList.add('active');
+                
+                // Show the corresponding tab content
+                const tabId = this.getAttribute('data-tab');
+                tabsContent.querySelector('#' + tabId).classList.add('active');
+            });
+        });
     });
 </script>
 </body>

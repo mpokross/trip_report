@@ -46,10 +46,12 @@ class ReportConfig:
         output_dir (Path): Directory where reports will be generated
         file_method (FileHandlingMethod): Method for handling files in the report
         report_title (str): Title of the generated report
+        csv_loaded (bool): Whether or not the generated report was loaded
     """
     output_dir: Path
     file_method: FileHandlingMethod
     report_title: str
+    csv_loaded: bool
 
 
 class IMCAReportError(Exception):
@@ -408,6 +410,7 @@ class IMCAReportGenerator:
             index_template = self.env.get_template('index.html')
             index_html = index_template.render(
                 report_title=config.report_title,
+                csv_loaded=config.csv_loaded,
                 imca_data=self.imca_data
             )
 
@@ -460,7 +463,8 @@ class IMCAReportGenerator:
             self,
             output_dir: Union[str, Path] = 'reports',
             file_method: Literal['symlink', 'copy'] = 'copy',
-            report_title: str = 'IMCA Data Summary'
+            report_title: str = 'IMCA Data Summary',
+            csv_loaded: bool = False,
     ) -> None:
         """
         Generate HTML reports.
@@ -485,7 +489,8 @@ class IMCAReportGenerator:
         config = ReportConfig(
             output_dir=output_path,
             file_method=method,
-            report_title=report_title
+            report_title=report_title,
+            csv_loaded=csv_loaded,
         )
 
         # Generate index page

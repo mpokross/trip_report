@@ -247,15 +247,17 @@ class SynchrotronDataCollector:
         scaling_stats = scaling_container.get('AutoProcScalingStatistics', [])
 
         if scaling_stats and isinstance(scaling_stats, list):
-            stats = scaling_stats[0] if scaling_stats else {}
-            new_stats = {}
-            for key, value in stats.items():
-                new_key = SCALING_STATISTICS_DICT.get(key.lower())
-                if new_key:
-                    new_stats[new_key] = value
-                else:
-                    new_stats[key] = value
-            results.update(new_stats)
+            for stats in scaling_stats:
+                new_stats = {}
+                for key, value in stats.items():
+                    new_key = SCALING_STATISTICS_DICT.get(key.lower())
+                    if new_key == "Scaling Statistics Type":
+                        continue
+                    elif new_key:
+                        new_stats[new_key] = value
+                    else:
+                        new_stats[key] = value
+                results[stats.scalingStatisticsType] = new_stats
 
         return results
 
@@ -489,6 +491,7 @@ class SynchrotronDataCollector:
             if not puck_path.is_dir():
                 continue
 
+            self.logger.info(f"Found Site {site_path.name}")
             stats.total_pucks += 1
             try:
                 self._process_puck(puck_path, stats)
@@ -501,7 +504,7 @@ class SynchrotronDataCollector:
                 })
                 self.logger.error(f"Error processing puck path {puck_path}: {pos_err}")
 
-    def collect_data(self) -> Dict:
+    def collect_data(self, no_site:bool) -> Dict:
         """
         Collect synchrotron data from directory structure with enhanced error handling.
 
@@ -523,10 +526,13 @@ class SynchrotronDataCollector:
         stats = ProcessingStats()
 
         try:
-            for site_path in self.base_path.iterdir():
-
-                self._process_site(site_path, stats)
-
+            if no_site:
+                self.logger.info(f"Users provide no site flag")
+                for puck_pth in self.base_path.iterdir():
+                    self._process_puck(puck_pth, stats)
+            else:
+                for site_path in self.base_path.iterdir():
+                    self._process_site(site_path, stats)
 
 
             # Log processing summary
