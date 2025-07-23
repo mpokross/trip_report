@@ -1,5 +1,6 @@
 import json
 import logging
+import sys
 from typing import Literal, Optional, Union, Dict, Any, List
 from pathlib import Path
 from csv import DictReader, Error as CSVError
@@ -145,6 +146,7 @@ def run_report(base_directory: Union[str, Path], json_flag: bool = False, debug:
         base_directory = Path(base_directory)
 
     try:
+        result = Box()
         # Read from json file or collect data from trip directory
         if json_flag:
             try:
@@ -163,7 +165,11 @@ def run_report(base_directory: Union[str, Path], json_flag: bool = False, debug:
                 logger=logger,
             )
             # Create a Box object from the collected data
-            result: Box = Box(collector.collect_data(no_site=no_site))
+            result: result = Box(collector.collect_data(no_site=no_site))
+
+        if not result:
+            logger.error(f"Could not collect data from {base_directory}")
+            sys.exit(1)
 
         # Default: CSV data not loaded
         result.csv_loaded = False

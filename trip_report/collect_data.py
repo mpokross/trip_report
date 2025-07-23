@@ -222,7 +222,14 @@ class SynchrotronDataCollector:
         for key, value in data.items():
             if 'Cell' in key:
                 parts = key.split('_')
-                cell_data[parts[1].upper()] = f'{float(value):.2f}'
+                if len(parts) >= 2:
+                    try:
+                        cell_data[parts[1].upper()] = f'{float(value):.2f}'
+                    except (ValueError, TypeError) as e:
+                        self.logger.warning(f"Failed to convert cell value '{value}' for key '{key}': {e}")
+                        cell_data[parts[1].upper()] = str(value)
+                else:
+                    self.logger.warning(f"Unexpected cell key format: '{key}', expected underscore-separated format")
             else:
                 new_data[key] = value
 
@@ -257,7 +264,14 @@ class SynchrotronDataCollector:
                         new_stats[new_key] = value
                     else:
                         new_stats[key] = value
-                results[stats.scalingStatisticsType] = new_stats
+                
+                # Safe access to scalingStatisticsType attribute
+                stats_type = getattr(stats, 'scalingStatisticsType', None)
+                if stats_type is None:
+                    # Fallback: try to get it as a dict key if stats is dict-like
+                    stats_type = stats.get('scalingStatisticsType', 'Unknown')
+                    
+                results[stats_type] = new_stats
 
         return results
 
@@ -306,7 +320,7 @@ class SynchrotronDataCollector:
 
     def _process_camera_directory(self, directory: Path) -> Dict:
         """Process camera directory."""
-        return {'camera_files': self.find_files(directory, 'jpg')}
+        return {'camera_files': self.find_files(directory, 'jpeg')}
 
     def _process_images_directory(self, directory: Path) -> Dict:
         """Process images directory."""
@@ -504,7 +518,7 @@ class SynchrotronDataCollector:
                 })
                 self.logger.error(f"Error processing puck path {puck_path}: {pos_err}")
 
-    def collect_data(self, no_site:bool) -> Dict:
+    def collect_data(self, no_site: bool) -> Dict:
         """
         Collect synchrotron data from directory structure with enhanced error handling.
 
