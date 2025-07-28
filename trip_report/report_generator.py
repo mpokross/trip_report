@@ -130,7 +130,7 @@ class IMCAReportGenerator:
             return []
 
         # Sort files with specific ordering
-        files = list(camera_dir.glob('*.jpg'))
+        files = list(camera_dir.glob('*.jpeg'))
         return sorted(
             files,
             key=lambda x: (
